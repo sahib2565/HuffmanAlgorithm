@@ -16,21 +16,6 @@ struct CompareNodes {
     }
 };
 
-void decompressFile(Node* root,std::string code,std::ofstream &myFile){
-	if(!root) return;
-
-	if(!root->left && !root->right){
-		myFile << char(root->data);
-		return;
-	}
-
-	if(code[0] == '1'){
-		decompressFile(root->right,code.erase(0,1),myFile);
-	}else{
-		decompressFile(root->left,code.erase(0,1),myFile);
-	}
-}
-
 
 int main(){
 	std::cout << "This program for decompressing" << std::endl;
@@ -83,5 +68,42 @@ int main(){
 		nodo->right = temp2;
 		pq.push(nodo);
 	}
+
+	Node* HuffmanTree = pq.top();
+	pq.pop();
+
+	// Final step of decompressing the file
+	std::ofstream OutFile("decompresssed_text.txt");
+
+	unsigned char byte;
+	bool eofFound = false;
+	Node* temp = HuffmanTree;
+
+	while(inFile.read(reinterpret_cast<char*>(&byte), sizeof(byte)) && !eofFound){
+		for(int i = 7;i >= 0;i--){
+			// Extract the bit
+			int bit = (byte >> i) & 1;
+			if(!temp->right && !temp->left){
+				int data = temp->data;
+				if(data == 256){
+					eofFound = true;
+					break;
+				}
+				OutFile.put((char)(data));
+				temp = HuffmanTree;
+			}
+			if(bit == 1){
+				temp = temp->right;
+			}
+			if(bit == 0){
+				temp = temp->left;
+			}
+		}
+	}
+	OutFile.close();
+	inFile.close();
+
+	return 0;
+
 }
 
